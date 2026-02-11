@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+venv/
+.env
+outputs/
+*.tmp
+.pytest_cache/
+setup_project.py
