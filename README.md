@@ -212,14 +212,3 @@ MIT License
 
 ---
 
-## Why this one looks professional
-- clean headings  
-- proper code blocks  
-- proper tables  
-- no messy ASCII diagram  
-- privacy disclaimer included  
-- examples are safe  
-
----
-
-If you want, I can also write a **top-tier GitHub “About” description + repo topics** so your project ranks better in search.
