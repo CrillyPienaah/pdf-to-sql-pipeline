@@ -1,4 +1,3 @@
-
 import json, time, structlog
 from typing import Any
 from app.config import settings
@@ -6,16 +5,15 @@ from app.models.document import DocType, EXTRACTION_MODELS
 logger = structlog.get_logger()
 class GeminiMapper:
     def __init__(self):
-        self._model = None
-    def _get_model(self):
-        if self._model is None:
+        self._client = None
+    def _get_client(self):
+        if self._client is None:
             if not settings.gemini_configured:
                 raise RuntimeError("Gemini API key not configured! Edit .env file.")
-            import google.generativeai as genai
-            genai.configure(api_key=settings.gemini_api_key)
-            self._model = genai.GenerativeModel(model_name=settings.gemini_model,
-                generation_config={"temperature":0.1,"max_output_tokens":4096,"response_mime_type":"application/json"})
-        return self._model
+            from google import genai
+            self._client = genai.Client(api_key=settings.gemini_api_key)
+            logger.info("gemini.ready", model=settings.gemini_model)
+        return self._client
     def map_to_schema(self, raw_text, tables, doc_type, markdown=""):
         schema_model = EXTRACTION_MODELS[doc_type]
         tables_txt = ""
@@ -31,8 +29,13 @@ Document: {content[:12000]}
 Tables: {tables_txt[:4000] if tables_txt else "None"}
 Return JSON only."""
         try:
-            resp = self._get_model().generate_content(prompt)
-            txt = resp.text.strip()
+            client = self._get_client()
+            response = client.models.generate_content(
+                model=settings.gemini_model,
+                contents=prompt,
+                config={"temperature": settings.gemini_temperature, "max_output_tokens": settings.gemini_max_output_tokens, "response_mime_type": "application/json"},
+            )
+            txt = response.text.strip()
             if txt.startswith("```"): txt = txt.split("\n",1)[1]
             if txt.endswith("```"): txt = txt[:-3]
             data = json.loads(txt.strip())
