@@ -77,13 +77,31 @@ curl -X POST http://localhost:8080/api/v1/extract \
 ### Bank Statement (`bank_statement`)
 ```json
 {
-  "account_number": "1000970",
-  "account_holder": "CHRISTOPHER CRILLY PIENAAH",
-  "bank_name": "ABSA BANK GHANA LIMITED",
-  "currency": "CED",
+  "account_number": "XXXX-XXXX",
+  "account_holder": "SAMPLE ACCOUNT HOLDER",
+  "bank_name": "SAMPLE BANK",
+  "currency": "GHS",
+  "statement_period": {
+    "start_date": "2025-01-01",
+    "end_date": "2025-01-31"
+  },
+  "opening_balance": 915.36,
+  "closing_balance": 511.36,
   "transactions": [
-    {"date": "2025-01-13", "description": "FEE B2W GIP", "amount": -1.0, "balance": 516.36, "transaction_type": "DEBIT"},
-    {"date": "2025-01-17", "description": "B2W GIP TRANSFER", "amount": -400.0, "balance": 511.36, "transaction_type": "DEBIT"}
+    {
+      "date": "2025-01-13",
+      "description": "ATM WITHDRAWAL",
+      "amount": -50.0,
+      "balance": 865.36,
+      "transaction_type": "DEBIT"
+    },
+    {
+      "date": "2025-01-17",
+      "description": "MOBILE MONEY TRANSFER",
+      "amount": -354.0,
+      "balance": 511.36,
+      "transaction_type": "DEBIT"
+    }
   ]
 }
 ```
@@ -91,15 +109,15 @@ curl -X POST http://localhost:8080/api/v1/extract \
 ### Invoice (`invoice`)
 ```json
 {
-  "vendor_name": "Launch Servicing, LLC",
-  "client_name": "CHRISTOPHER PIENAAH",
+  "vendor_name": "SAMPLE SERVICER LLC",
+  "client_name": "SAMPLE CUSTOMER",
   "invoice_date": "2026-01-07",
   "due_date": "2026-01-27",
   "total_amount": 378.49,
   "currency": "USD",
   "line_items": [
-    {"description": "Applied to Principal", "total": 4.85},
-    {"description": "Applied to Interest", "total": 373.64}
+    { "description": "Applied to Principal", "total": 4.85 },
+    { "description": "Applied to Interest", "total": 373.64 }
   ]
 }
 ```
@@ -107,8 +125,8 @@ curl -X POST http://localhost:8080/api/v1/extract \
 ### Clinical Note (`clinical_note`)
 ```json
 {
-  "patient_id": "PT-00234",
-  "provider_name": "Dr. Sarah Chen, MD",
+  "patient_id": "PT-00000",
+  "provider_name": "Dr. Jane Doe, MD",
   "diagnoses": ["Acute bronchitis (J20.9)", "Mild asthma (J45.20)"],
   "medications": ["Albuterol PRN", "Montelukast 10mg"],
   "plan": "Start azithromycin, follow up in 2 weeks"
@@ -127,17 +145,17 @@ curl -X POST http://localhost:8080/api/v1/extract \
 ```
 pdf-to-sql-pipeline/
 +-- app/
-¦   +-- main.py                    # FastAPI application
-¦   +-- pipeline.py                # Core pipeline orchestration
-¦   +-- config.py                  # Environment configuration
-¦   +-- extractors/
-¦   ¦   +-- docling_extractor.py   # Docling OCR (free, CPU-based)
-¦   +-- mappers/
-¦   ¦   +-- gemini_mapper.py       # Gemini Flash-Lite schema mapping
-¦   +-- validators/
-¦   ¦   +-- schema_validator.py    # Business rules validation
-¦   +-- models/
-¦       +-- document.py            # Pydantic schemas
+Â¦   +-- main.py                    # FastAPI application
+Â¦   +-- pipeline.py                # Core pipeline orchestration
+Â¦   +-- config.py                  # Environment configuration
+Â¦   +-- extractors/
+Â¦   Â¦   +-- docling_extractor.py   # Docling OCR (free, CPU-based)
+Â¦   +-- mappers/
+Â¦   Â¦   +-- gemini_mapper.py       # Gemini Flash-Lite schema mapping
+Â¦   +-- validators/
+Â¦   Â¦   +-- schema_validator.py    # Business rules validation
+Â¦   +-- models/
+Â¦       +-- document.py            # Pydantic schemas
 +-- run_extract.py                 # CLI tool
 +-- requirements.txt
 +-- .env                           # API key (not committed)
