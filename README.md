@@ -1,114 +1,88 @@
-📄 PDF-to-SQL Pipeline
+# 📄 PDF-to-SQL Pipeline
 
-AI-powered document extraction API that converts unstructured PDFs into structured JSON data.
+**AI-powered document extraction API that converts unstructured PDFs into structured JSON data.**
 
-Built with Docling OCR (free, local) + Google Gemini Flash-Lite — extracts bank statements, invoices, and clinical-style notes at < $0.001 per document.
+Built with **Docling OCR (free, local)** + **Google Gemini Flash-Lite** — extracts bank statements, invoices, and clinical-style notes at **< $0.001 per document**.
 
-Privacy note: This repository does not include any real customer documents, bank statements, invoices, or clinical records. All examples shown are anonymized or synthetic.
+> **Privacy note:** This repository does not include any real customer documents, bank statements, invoices, or clinical records. All examples shown are anonymized or synthetic.
 
+---
 
+## 🚀 How It Works
 
+```text
+Upload PDF → Docling OCR (Local) → Gemini (Schema Mapping) → Validation → Structured JSON
+Pipeline stages
+Docling OCR (Local-first)
+Extracts text, tables, and layout from PDFs (runs locally on CPU)
 
+Gemini Flash-Lite (Schema mapping)
+Maps extracted text into structured JSON using few-shot prompting (~$0.10 / 1M tokens)
 
+Deterministic Validation Engine (Trust layer)
+Business rules validate balances, totals, date formats, and field consistency
 
+✨ Key Features
+Local-first OCR — Docling runs on CPU. No GPU required. No cloud OCR.
 
+LLM schema mapping — Gemini Flash-Lite converts raw text into typed JSON.
 
-How It Works
-┌──────────┐     ┌─────────────────┐     ┌─────────────────┐     ┌──────────────┐
-│  Upload  │────▶│  Docling OCR    │────▶│  Gemini AI      │────▶│  Structured  │
-│  PDF     │     │  (Free, Local)  │     │  Schema Mapping │     │  JSON Output │
-└──────────┘     │                 │     │                 │     └──────────────┘
-                 │  • Text extract │     │  • Few-shot     │              │
-                 │  • Table detect │     │  • Field mapping│              ▼
-                 │  • Layout parse │     │  • Type coerce  │     ┌──────────────┐
-                 │  • 97–99% conf. │     │  • ~$0.0002/doc │     │  Validation  │
-                 └─────────────────┘     └─────────────────┘     │  Engine      │
-                                                                  │              │
-                                                                  │  • Balance   │
-                                                                  │    checks    │
-                                                                  │  • Date fmt  │
-                                                                  │  • Totals    │
-                                                                  └──────────────┘
+Deterministic validation — balance checks, totals reconciliation, date validation.
 
-Key Features
+Multi-schema support — bank statements, invoices, and clinical-style notes.
 
-Hybrid OCR Architecture — Docling (free, CPU-based) as primary extractor. No GPU required.
+FastAPI + Swagger UI — interactive API docs available at /docs.
 
-Gemini Flash-Lite Mapping — Converts raw text + tables into structured JSON via few-shot prompting. Costs ~$0.0002 per document.
+Cost optimized — < $0.001 per document. Designed for regulated environments.
 
-Business Rules Validation — Balance consistency checks, date format validation, invoice total matching.
-
-Three Document Types — Bank statements, invoices, and clinical-style notes with domain-specific extraction schemas.
-
-FastAPI with Swagger UI — REST API with interactive documentation at /docs.
-
-Cost Optimized — Entire pipeline runs for < $0.001 per document. ~300x cheaper than enterprise alternatives.
-
-Benchmarks
-
+📊 Benchmarks
 Benchmarks were run on real-world document formats across multiple domains.
 Sources are intentionally anonymized to avoid exposing private financial information.
 
-Document	Source (Anonymized)	Pages	Confidence	Fields Extracted	Cost	Time
-Bank Statement	Ghanaian retail bank	3	97%	Account, 9 transactions	$0.0009	12.5s
-Account Statement	Ghanaian retail bank	2	98%	Holder, period, balances	$0.0002	12.2s
-Billing Statement	US loan servicer	4	99%	Vendor, client, line items	$0.0009	14.1s
-
-Cost comparison:
-
+Document Type	Source (Anonymized)	Pages	Confidence	Fields Extracted	Cost	Time
+Bank Statement	Ghanaian retail bank	3	97%	Account + 9 transactions	$0.0009	12.5s
+Account Statement	Ghanaian retail bank	2	98%	Holder + period + balances	$0.0002	12.2s
+Billing Statement	US loan servicer	4	99%	Vendor + client + line items	$0.0009	14.1s
+Cost comparison
 Approach	Cost per Document	Annual (10K docs)
-Google Document AI	$0.06/page	$2,400+
-AWS Textract	$0.015/page	$600+
+Google Document AI	$0.06 / page	$2,400+
+AWS Textract	$0.015 / page	$600+
 This Pipeline	$0.0008	$8
-Quick Start
+⚡ Quick Start
 Prerequisites
-
 Python 3.11+
 
-Free Gemini API key from aistudio.google.com/apikey
+Free Gemini API key from: https://aistudio.google.com/apikey
 
-Setup (5 minutes)
+Setup
 # Clone
 git clone https://github.com/CrillyPienaah/pdf-to-sql-pipeline.git
 cd pdf-to-sql-pipeline
 
-# Environment
+# Create environment
 python -m venv venv
-source venv/bin/activate        # Mac/Linux
-# .\venv\Scripts\activate       # Windows
+source venv/bin/activate          # Mac/Linux
+# .\venv\Scripts\activate         # Windows
 
-# Install
+# Install dependencies
 pip install -r requirements.txt
 
-# Configure (paste your free Gemini API key)
+# Configure API key
 echo "GEMINI_API_KEY=your_key_here" > .env
-
-Extract a Document
-
-CLI:
-
+🧠 Extract a Document
+CLI
 python run_extract.py document.pdf bank_statement
 python run_extract.py invoice.pdf invoice
 python run_extract.py clinical_note.pdf clinical_note
-
-
-API Server:
-
+API Server
 uvicorn app.main:app --reload --port 8080
-# Open http://localhost:8080/docs for Swagger UI
-
-
-cURL:
-
+# Open http://localhost:8080/docs
+cURL
 curl -X POST http://localhost:8080/api/v1/extract \
   -F "file=@statement.pdf" \
   -F "doc_type=bank_statement"
-
-Supported Document Types
+📌 Supported Document Types
 🏦 Bank Statement (bank_statement)
-
-Extracts account details and transaction history.
-
 {
   "account_number": "XXXX-XXXX",
   "account_holder": "SAMPLE ACCOUNT HOLDER",
@@ -128,11 +102,7 @@ Extracts account details and transaction history.
     }
   ]
 }
-
 🧾 Invoice (invoice)
-
-Extracts vendor info, line items, and totals.
-
 {
   "vendor_name": "SAMPLE SERVICER LLC",
   "client_name": "SAMPLE CUSTOMER",
@@ -156,27 +126,28 @@ Extracts vendor info, line items, and totals.
     }
   ]
 }
-
 🏥 Clinical Note (clinical_note)
-
-Extracts patient info, diagnoses, medications, and care plan.
-
 {
   "patient_id": "PT-00000",
   "encounter_date": "2026-01-15",
   "provider_name": "Dr. Jane Doe, MD",
   "chief_complaint": "Persistent cough for 3 weeks",
-  "diagnoses": ["Acute bronchitis (J20.9)", "Mild asthma exacerbation (J45.20)"],
-  "medications": ["Albuterol inhaler PRN", "Montelukast 10mg daily"],
+  "diagnoses": [
+    "Acute bronchitis (J20.9)",
+    "Mild asthma exacerbation (J45.20)"
+  ],
+  "medications": [
+    "Albuterol inhaler PRN",
+    "Montelukast 10mg daily"
+  ],
   "plan": "Start azithromycin, follow up in 2 weeks"
 }
-
-API Endpoints
+🔌 API Endpoints
 Method	Endpoint	Description
-GET	/health	Health check and configuration status
-GET	/api/v1/schemas	List available extraction schemas
+GET	/health	Health check
+GET	/api/v1/schemas	List extraction schemas
 POST	/api/v1/extract	Upload PDF and extract structured data
-Project Structure
+🧱 Project Structure
 pdf-to-sql-pipeline/
 ├── app/
 │   ├── main.py
@@ -193,26 +164,24 @@ pdf-to-sql-pipeline/
 ├── run_extract.py
 ├── outputs/
 ├── requirements.txt
-└── .env  # API key (not committed)
-
-Design Decisions
+└── .env   # API key (not committed)
+🧠 Design Decisions
 Decision	Choice	Rationale
-Primary OCR	Docling (free) over Document AI ($0.06/pg)	85–90% cost savings, 97%+ accuracy on digital PDFs
-LLM for mapping	Gemini Flash-Lite ($0.10/1M tokens)	Cheapest model with sufficient accuracy for structured extraction
-Schema validation	Pydantic + custom business rules	Type safety + domain-specific checks (balance matching, date formats)
-API framework	FastAPI	Auto-generated OpenAPI docs, async support, type hints
-Architecture	Modular pipeline	Each stage is independently testable and swappable
-Roadmap
+Primary OCR	Docling (local) over cloud OCR	Compliance-friendly + low cost
+LLM for mapping	Gemini Flash-Lite	Cheapest model that performs well for schema mapping
+Validation	Pydantic + business rules	Deterministic checks wrap probabilistic outputs
+API framework	FastAPI	OpenAPI docs, async support, type hints
+Architecture	Modular pipeline	Each stage is independently swappable and testable
+🗺️ Roadmap
+ Docling OCR extraction (CPU)
 
- Docling OCR extraction with confidence scoring
-
- Gemini Flash-Lite schema mapping with few-shot prompts
+ Gemini Flash-Lite schema mapping
 
  Business rules validation engine
 
- FastAPI with Swagger UI
+ FastAPI + Swagger UI
 
- Bank statement, invoice, clinical note support
+ Bank statement / invoice / clinical-style note support
 
  Fully local mapping mode (open-weight models / Ollama)
 
@@ -226,23 +195,31 @@ Roadmap
 
  React dashboard for extraction results
 
-Tech Stack
-Component	Technology	Cost
-OCR Engine	Docling
-	Free
+🧰 Tech Stack
+Component	Technology
+OCR Engine	Docling (IBM, MIT License)
 LLM Mapping	Gemini 2.5 Flash-Lite
-	Free tier
-API Framework	FastAPI
-	Free
+API	FastAPI
 Validation	Pydantic v2
-	Free
-Total		$0 for development
-Author
-
+👤 Author
 Christopher Crilly Pienaah
 MSc Analytics (Applied Machine Intelligence), Northeastern University
-AI/ML Product Strategist | LinkedIn
+AI/ML Product Strategist
 
-License
-
+📄 License
 MIT License
+
+
+---
+
+## Why this one looks professional
+- clean headings  
+- proper code blocks  
+- proper tables  
+- no messy ASCII diagram  
+- privacy disclaimer included  
+- examples are safe  
+
+---
+
+If you want, I can also write a **top-tier GitHub “About” description + repo topics** so your project ranks better in search.
