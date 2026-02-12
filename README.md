@@ -14,7 +14,7 @@ Built with **Docling OCR (free, local)** + **Google Gemini Flash-Lite** — extr
 ---
 
 ## 🚀 How It Works
-
+![Architecture](architecture.svg)
 ```text
 Upload PDF → Docling OCR (Local) → Gemini (Schema Mapping) → Validation → Structured JSON
 ```
