@@ -84,6 +84,10 @@ pip install -r requirements.txt
 
 # Configure API key
 echo "GEMINI_API_KEY=your_key_here" > .env
+
+# Optional: allowed browser origins for the API (comma-separated).
+# Defaults to common localhost dev ports; set this when deploying a frontend.
+# echo "CORS_ORIGINS=https://your-frontend.example.com" >> .env
 ```
 
 ---

@@ -9,7 +9,7 @@ from app.pipeline import Pipeline
 
 app = FastAPI(title="PDF-to-SQL Pipeline", version="0.1.0",
     description="Extract structured data from PDFs using Docling OCR + Gemini AI")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origin_list, allow_methods=["*"], allow_headers=["*"])
 pipeline = Pipeline()
 
 @app.get("/health")

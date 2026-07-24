@@ -42,7 +42,8 @@ Return JSON only."""
             data = json.loads(txt.strip())
             result = schema_model.model_validate(data).model_dump()
             tokens = (len(prompt)+len(txt))//4
-            return result, tokens
+            return result, tokens, None
         except (json.JSONDecodeError, ValidationError) as e:
-            logger.warning("gemini.parse_failed", error=str(e)[:200])
-            return schema_model().model_dump(), 0
+            err = f"Gemini response could not be parsed ({type(e).__name__}): {str(e)[:200]}"
+            logger.warning("gemini.parse_failed", error=err)
+            return schema_model().model_dump(), 0, err

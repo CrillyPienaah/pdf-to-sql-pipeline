@@ -29,11 +29,14 @@ class Pipeline:
                 extracted_data={"_raw_text":ext.raw_text[:2000]},validation_errors=["Set GEMINI_API_KEY in .env"])
         print(f"  [{jid}] Mapping with Gemini...")
         try:
-            data, tokens = self.mapper.map_to_schema(ext.raw_text, ext.tables, dt, ext.markdown)
+            data, tokens, map_error = self.mapper.map_to_schema(ext.raw_text, ext.tables, dt, ext.markdown)
         except Exception as e:
             return ExtractionResponse(job_id=jid,status="failed",doc_type=doc_type,
                 validation_errors=[f"Gemini mapping failed: {e}"],metadata={"confidence":ext.confidence})
         valid, errors = self.validator.validate(data, dt)
+        if map_error:
+            errors.insert(0, map_error)
+            valid = False
         status = "completed" if valid else "needs_review"
         cost = tokens * 0.0000002
         ms = int((time.time()-start)*1000)
