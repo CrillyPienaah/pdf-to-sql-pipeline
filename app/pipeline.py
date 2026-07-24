@@ -21,21 +21,25 @@ class Pipeline:
         print(f"  [{jid}] Extracting with Docling...")
         ext = self.extractor.extract(file_path)
         print(f"  [{jid}] OCR done: {ext.num_pages} pages, confidence={ext.confidence:.2f}, {len(ext.tables)} tables")
-        if ext.confidence < 0.3:
+        if ext.confidence < settings.docling_confidence_threshold:
             return ExtractionResponse(job_id=jid,status="failed",doc_type=doc_type,
                 validation_errors=[f"OCR confidence too low ({ext.confidence:.2f})"],metadata={"confidence":ext.confidence})
         if not settings.gemini_configured:
             return ExtractionResponse(job_id=jid,status="needs_review",doc_type=doc_type,
                 extracted_data={"_raw_text":ext.raw_text[:2000]},validation_errors=["Set GEMINI_API_KEY in .env"])
         print(f"  [{jid}] Mapping with Gemini...")
-        data, tokens = self.mapper.map_to_schema(ext.raw_text, ext.tables, dt, ext.markdown)
+        try:
+            data, tokens = self.mapper.map_to_schema(ext.raw_text, ext.tables, dt, ext.markdown)
+        except Exception as e:
+            return ExtractionResponse(job_id=jid,status="failed",doc_type=doc_type,
+                validation_errors=[f"Gemini mapping failed: {e}"],metadata={"confidence":ext.confidence})
         valid, errors = self.validator.validate(data, dt)
         status = "completed" if valid else "needs_review"
         cost = tokens * 0.0000002
         ms = int((time.time()-start)*1000)
         settings.output_dir.mkdir(parents=True, exist_ok=True)
         out = settings.output_dir / f"{jid}_{file_path.stem}.json"
-        with open(out,"w") as f: json.dump({"job_id":jid,"status":status,"data":data,"errors":errors},f,indent=2)
+        with open(out,"w",encoding="utf-8") as f: json.dump({"job_id":jid,"status":status,"data":data,"errors":errors},f,indent=2,ensure_ascii=False)
         print(f"  [{jid}] Done! Status={status}, cost=${cost:.6f}, time={ms}ms")
         return ExtractionResponse(job_id=jid,status=status,doc_type=doc_type,extracted_data=data,
             validation_errors=errors,metadata={"confidence":ext.confidence,"tokens":tokens,"cost_usd":cost,"time_ms":ms,"saved":str(out)})

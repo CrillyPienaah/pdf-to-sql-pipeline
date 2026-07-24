@@ -32,7 +32,7 @@ class DoclingExtractor:
             texts, tables, pages = [], [], 0
             for item, _ in doc.iterate_items():
                 if hasattr(item, "prov") and item.prov:
-                    pages = max(pages, (item.prov[0].page_no if item.prov else 0) + 1)
+                    pages = max(pages, item.prov[0].page_no)
                 if hasattr(item, "text") and item.text:
                     texts.append(item.text)
                 if "table" in type(item).__name__.lower() and hasattr(item, "export_to_dataframe"):
@@ -40,7 +40,7 @@ class DoclingExtractor:
                         df = item.export_to_dataframe()
                         t = [df.columns.tolist()] + [[str(c) for c in r] for r in df.values.tolist()]
                         tables.append(t)
-                    except: pass
+                    except Exception: pass
             raw = chr(10).join(texts)
             words = raw.split()
             conf = 0.1 if len(words) < 5 else round(min(max(sum(1 for w in words if sum(c.isalnum() for c in w)/max(len(w),1)>0.6)/len(words)*0.7+min(len(raw)/500,1)*0.3,0),1),3)

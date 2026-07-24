@@ -2,6 +2,7 @@ import tempfile
 from pathlib import Path
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.concurrency import run_in_threadpool
 from app.config import settings
 from app.models.document import DocType, EXTRACTION_MODELS, ExtractionResponse
 from app.pipeline import Pipeline
@@ -32,6 +33,6 @@ async def extract(file: UploadFile = File(...), doc_type: str = Form(...)):
         tmp.write(content)
         tmp_path = Path(tmp.name)
     try:
-        return pipeline.process(tmp_path, doc_type)
+        return await run_in_threadpool(pipeline.process, tmp_path, doc_type)
     finally:
         tmp_path.unlink(missing_ok=True)

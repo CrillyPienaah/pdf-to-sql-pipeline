@@ -1,5 +1,6 @@
 import json, time, structlog
 from typing import Any
+from pydantic import ValidationError
 from app.config import settings
 from app.models.document import DocType, EXTRACTION_MODELS
 logger = structlog.get_logger()
@@ -35,12 +36,13 @@ Return JSON only."""
                 contents=prompt,
                 config={"temperature": settings.gemini_temperature, "max_output_tokens": settings.gemini_max_output_tokens, "response_mime_type": "application/json"},
             )
-            txt = response.text.strip()
-            if txt.startswith("```"): txt = txt.split("\n",1)[1]
+            txt = (response.text or "").strip()
+            if txt.startswith("```"): txt = txt.split("\n",1)[1] if "\n" in txt else ""
             if txt.endswith("```"): txt = txt[:-3]
             data = json.loads(txt.strip())
             result = schema_model.model_validate(data).model_dump()
             tokens = (len(prompt)+len(txt))//4
             return result, tokens
-        except json.JSONDecodeError:
+        except (json.JSONDecodeError, ValidationError) as e:
+            logger.warning("gemini.parse_failed", error=str(e)[:200])
             return schema_model().model_dump(), 0
