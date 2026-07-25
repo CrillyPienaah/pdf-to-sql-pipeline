@@ -20,6 +20,17 @@ async def health():
 async def schemas():
     return {dt.value: {"fields": list(m.model_fields.keys())} for dt, m in EXTRACTION_MODELS.items()}
 
+@app.get("/api/v1/jobs")
+def list_jobs(limit: int = 20):
+    return {"jobs": pipeline.loader.list_jobs(min(max(limit, 1), 200))}
+
+@app.get("/api/v1/jobs/{job_id}")
+def get_job(job_id: str):
+    job = pipeline.loader.get_job(job_id)
+    if job is None:
+        raise HTTPException(404, f"Job not found: {job_id}")
+    return job
+
 @app.post("/api/v1/extract", response_model=ExtractionResponse)
 async def extract(file: UploadFile = File(...), doc_type: str = Form(...)):
     if doc_type not in [d.value for d in DocType]:

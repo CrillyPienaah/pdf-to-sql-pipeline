@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     docling_confidence_threshold: float = 0.3
     max_file_size_mb: int = 50
     output_dir: Path = Path("./outputs")
+    db_path: Path = Path("./outputs/extractions.db")
     cors_origins: str = "http://localhost:3000,http://localhost:5173,http://localhost:8000"
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "case_sensitive": False}
     @property

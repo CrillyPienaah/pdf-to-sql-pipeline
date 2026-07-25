@@ -16,7 +16,7 @@ Built with **Docling OCR (free, local)** + **Google Gemini Flash-Lite** — extr
 ## 🚀 How It Works
 ![Architecture](architecture.svg)
 ```text
-Upload PDF → Docling OCR (Local) → Gemini (Schema Mapping) → Validation → Structured JSON
+Upload PDF → Docling OCR (Local) → Gemini (Schema Mapping) → Validation → SQLite (Queryable SQL) + JSON
 ```
 
 **Pipeline stages:**
@@ -24,6 +24,7 @@ Upload PDF → Docling OCR (Local) → Gemini (Schema Mapping) → Validation �
 1. **Docling OCR (Local-first)** — Extracts text, tables, and layout from PDFs. Runs locally on CPU — no cloud, no GPU, no data leaves your machine.
 2. **Gemini Flash-Lite (Schema mapping)** — Maps extracted text into structured JSON using few-shot prompting (~$0.10 / 1M tokens). The model never sees the original PDF.
 3. **Deterministic Validation Engine (Trust layer)** — Business rules validate balances, totals, date formats, and field consistency. No LLM involved — just logic.
+4. **SQLite Persistence (SQL layer)** — Validated extractions land in a relational SQLite database (`outputs/extractions.db`) with normalized tables per document type — queryable via the API or plain SQL, and swappable for Postgres/BigQuery.
 
 ---
 
@@ -32,6 +33,7 @@ Upload PDF → Docling OCR (Local) → Gemini (Schema Mapping) → Validation �
 - **Local-first OCR** — Docling runs on CPU. No GPU required. No cloud OCR. Sensitive documents never leave your machine.
 - **LLM schema mapping** — Gemini Flash-Lite converts raw text into typed JSON via few-shot prompting.
 - **Deterministic validation** — Balance checks, totals reconciliation, date format validation.
+- **SQL persistence** — Every extraction is loaded into relational SQLite tables (jobs, transactions, line items) you can query with plain SQL or via the API.
 - **Multi-schema support** — Bank statements, invoices, and clinical-style notes with domain-specific extraction models.
 - **FastAPI + Swagger UI** — Interactive API docs available at `/docs`.
 - **Cost optimized** — < $0.001 per document. Designed for regulated environments where data sovereignty matters.
@@ -199,6 +201,14 @@ curl -X POST http://localhost:8080/api/v1/extract \
 | `GET` | `/health` | Health check |
 | `GET` | `/api/v1/schemas` | List extraction schemas |
 | `POST` | `/api/v1/extract` | Upload PDF and extract structured data |
+| `GET` | `/api/v1/jobs` | List stored extraction jobs (from SQLite) |
+| `GET` | `/api/v1/jobs/{job_id}` | Fetch a stored extraction with its relational data |
+
+**Query the database directly:**
+
+```bash
+sqlite3 outputs/extractions.db "SELECT description, amount FROM bank_transactions WHERE amount < 0"
+```
 
 ---
 
@@ -216,10 +226,12 @@ pdf-to-sql-pipeline/
 │   │   └── gemini_mapper.py       # Gemini Flash-Lite schema mapping
 │   ├── validators/
 │   │   └── schema_validator.py    # Business rules validation
+│   ├── loaders/
+│   │   └── sqlite_loader.py       # SQLite persistence (relational tables)
 │   └── models/
 │       └── document.py            # Pydantic extraction schemas
 ├── run_extract.py                 # CLI extraction tool
-├── outputs/                       # Extracted JSON results (gitignored)
+├── outputs/                       # JSON results + extractions.db (gitignored)
 ├── requirements.txt               # Direct dependencies only
 └── .env                           # API key (not committed)
 ```
@@ -233,6 +245,7 @@ pdf-to-sql-pipeline/
 | Primary OCR | Docling (local) over cloud OCR | Compliance-friendly, zero cost, data never leaves machine |
 | LLM for mapping | Gemini Flash-Lite ($0.10/1M tokens) | Cheapest model that performs well for structured extraction |
 | Validation | Pydantic + deterministic business rules | Deterministic checks wrap probabilistic AI outputs for trust |
+| Storage | SQLite (stdlib, zero-config) | Local-first SQL with no extra dependencies; schema translates directly to Postgres/BigQuery |
 | API framework | FastAPI | Auto OpenAPI docs, async support, type hints |
 | Architecture | Modular pipeline | Each stage is independently swappable and testable |
 | Data sovereignty | Local-first by default | Enables deployment in regulated environments (finance, healthcare) |
@@ -247,6 +260,7 @@ pdf-to-sql-pipeline/
 - [x] FastAPI + Swagger UI
 - [x] Bank statement / invoice / clinical-style note support
 - [x] Migration to `google-genai` (current SDK)
+- [x] SQLite persistence layer (relational tables + query API)
 - [ ] Fully local mapping mode (open-weight models / Ollama)
 - [ ] Document AI fallback for scanned/handwritten documents
 - [ ] Cloud Run deployment (public API)

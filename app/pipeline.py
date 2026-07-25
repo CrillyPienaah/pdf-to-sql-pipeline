@@ -4,6 +4,7 @@ from pathlib import Path
 from app.extractors.docling_extractor import DoclingExtractor
 from app.mappers.gemini_mapper import GeminiMapper
 from app.validators.schema_validator import SchemaValidator
+from app.loaders.sqlite_loader import SQLiteLoader
 from app.models.document import DocType, ExtractionResponse
 from app.config import settings
 class Pipeline:
@@ -11,6 +12,7 @@ class Pipeline:
         self.extractor = DoclingExtractor()
         self.mapper = GeminiMapper()
         self.validator = SchemaValidator()
+        self.loader = SQLiteLoader()
     def process(self, file_path, doc_type):
         start = time.time()
         file_path = Path(file_path)
@@ -43,6 +45,13 @@ class Pipeline:
         settings.output_dir.mkdir(parents=True, exist_ok=True)
         out = settings.output_dir / f"{jid}_{file_path.stem}.json"
         with open(out,"w",encoding="utf-8") as f: json.dump({"job_id":jid,"status":status,"data":data,"errors":errors},f,indent=2,ensure_ascii=False)
+        db = str(settings.db_path)
+        try:
+            self.loader.load(jid, dt, data, status, errors,
+                {"source_file":file_path.name,"confidence":ext.confidence,"tokens":tokens,"cost_usd":cost,"time_ms":ms})
+        except Exception as e:
+            errors.append(f"SQL load failed: {e}")
+            db = None
         print(f"  [{jid}] Done! Status={status}, cost=${cost:.6f}, time={ms}ms")
         return ExtractionResponse(job_id=jid,status=status,doc_type=doc_type,extracted_data=data,
-            validation_errors=errors,metadata={"confidence":ext.confidence,"tokens":tokens,"cost_usd":cost,"time_ms":ms,"saved":str(out)})
+            validation_errors=errors,metadata={"confidence":ext.confidence,"tokens":tokens,"cost_usd":cost,"time_ms":ms,"saved":str(out),"db":db})
